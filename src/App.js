@@ -8,14 +8,23 @@ import { getFirestore, collection, addDoc, getDocs, setDoc, doc, deleteDoc } fro
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: process.env.fireBase_apiKey,
-  authDomain: process.env.fireBase_authDomain,
-  projectId: process.env.fireBase_projectId,
-  storageBucket: process.env.fireBase_storageBucket,
-  messagingSenderId: process.env.fireBase_messagingSenderId,
-  appId: process.env.fireBase_appId,
-  measurementId: process.env.fireBase_measurementId
+  apiKey: "AIzaSyBElUcnWWCJIHYodXTaFULLi0-mavyZPR8",
+  authDomain: "calendar-d1ee6.firebaseapp.com",
+  projectId: "calendar-d1ee6",
+  storageBucket: "calendar-d1ee6.appspot.com",
+  messagingSenderId: "212205682130",
+  appId: "1:212205682130:web:f8c9de724d70046bee5c0b",
+  measurementId: "G-K26FJ2TK9M"
 };
+// const firebaseConfig = {
+//   apiKey: process.env.fireBase_apiKey,
+//   authDomain: process.env.fireBase_authDomain,
+//   projectId: process.env.fireBase_projectId,
+//   storageBucket: process.env.fireBase_storageBucket,
+//   messagingSenderId: process.env.fireBase_messagingSenderId,
+//   appId: process.env.fireBase_appId,
+//   measurementId: process.env.fireBase_measurementId
+// };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
