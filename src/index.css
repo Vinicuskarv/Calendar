@@ -491,6 +491,16 @@
   color: rgb(239, 207, 207);
 }
 .values{
+  position: relative;
+  display: flex;
+}
+.values-name{
+  position: absolute;
+  color: #b38add;
+  top: -18px;
+  left: -17px;
+}
+.values-event{
   display: flex;
 }
 .values div{

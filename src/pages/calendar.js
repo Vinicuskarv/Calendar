@@ -63,7 +63,7 @@ function App() {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        getEvents(currentUser.uid);  // Fetch events for the current user
+        getEvents(currentUser.uid);
       } else {
         setUser(null);
       }
@@ -117,7 +117,16 @@ function App() {
     try {
       const userEventsRef = collection(db, `users/${userId}/events`);
       const querySnapshot = await getDocs(userEventsRef);
-      const events = querySnapshot.docs.map(doc => doc.data());
+      const events = [];
+  
+      for (const doc of querySnapshot.docs) {
+        const eventData = doc.data();
+        events.push({
+          ...eventData,
+          userName: eventData.userName || 'Unknown' // Adicione esta linha
+        });
+      }
+  
       setEventsArr(events);
     } catch (error) {
       console.error('Error fetching events:', error.message);
@@ -216,6 +225,15 @@ function App() {
   const handleAddEventClick = () => {
     setShowEventForm(prev => !prev);
   };
+  const getUserDetails = async (userId) => {
+    try {
+      const userDoc = await doc(db, `users/${userId}`).get();
+      return userDoc.exists() ? userDoc.data() : { name: 'Unknown' };
+    } catch (error) {
+      console.error('Error fetching user details:', error.message);
+      return { name: 'Unknown' };
+    }
+  };
 
   const handleSaveEvent = () => {
     if (!eventTitle || !eventTimeFrom || !eventTimeTo) {
@@ -225,7 +243,9 @@ function App() {
   
     const newEvent = {
       title: eventTitle,
-      time: `${eventTimeFrom} - ${eventTimeTo}`
+      time: `${eventTimeFrom} - ${eventTimeTo}`,
+      user: user.uid,
+      userName: user.displayName
     };
   
     setEventsArr(prevEvents => {
@@ -327,14 +347,21 @@ function App() {
         <div className="events">
           {getEventsForActiveDay() && getEventsForActiveDay().events.map((event, index) => (
             <div key={index} className="LineEvents">
-                <div className="values">
-                    <div>{event.title}</div>
-                    <div>{event.time}</div>
+              <div className="values">
+                <div className='values-name'>{event.userName || 'Unknown'}</div>
+                <div className='values-event'>
+                  <div>{event.title}</div>
+                  <div>{event.time}</div>
                 </div>
-              <div className="trash" onClick={() => handleDeleteEvent(event.title)}><i className="fas fa-trash"></i></div>
+
+              </div>
+              <div className="trash" onClick={() => handleDeleteEvent(event.title)}>
+                <i className="fas fa-trash"></i>
+              </div>
             </div>
           ))}
         </div>
+
         {showEventForm && (
           <div className="add-event-wrapper">
             <div className="add-event-header">
