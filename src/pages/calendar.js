@@ -326,10 +326,12 @@ function App() {
         </div>
         <div className="events">
           {getEventsForActiveDay() && getEventsForActiveDay().events.map((event, index) => (
-            <div key={index} >
-              <div>{event.title}</div>
-              <div>{event.time}</div>
-              <button onClick={() => handleDeleteEvent(event.title)}>Delete</button>
+            <div key={index} className="LineEvents">
+                <div className="values">
+                    <div>{event.title}</div>
+                    <div>{event.time}</div>
+                </div>
+              <div className="trash" onClick={() => handleDeleteEvent(event.title)}><i className="fas fa-trash"></i></div>
             </div>
           ))}
         </div>
@@ -351,7 +353,7 @@ function App() {
               </div>
               <div className="add-event-input">
                 <input
-                  type="text"
+                  type="time"
                   placeholder="Início do Tempo"
                   className="event-time-from"
                   value={eventTimeFrom}
@@ -360,7 +362,7 @@ function App() {
               </div>
               <div className="add-event-input">
                 <input
-                  type="text"
+                  type="time"
                   placeholder="Fim do Tempo"
                   className="event-time-to"
                   value={eventTimeTo}
