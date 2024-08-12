@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
-import NavBar from '../../components/navbar'; // Corrija o caminho se necessário
+import { getFirestore, doc, setDoc } from "firebase/firestore";
+import NavBar from '../../components/navbar';
+import './authentication.css';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBElUcnWWCJIHYodXTaFULLi0-mavyZPR8",
@@ -16,30 +18,41 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
+const db = getFirestore(app);
 
 function Login() {
   const [user, setUser] = useState(null);
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [contact, setContact] = useState('');
 
   useEffect(() => {
-    // Monitor authentication state
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        // Implement getEvents if needed
-        // getEvents(currentUser.uid);  
+        // Fetch user data if needed
       } else {
         setUser(null);
       }
     });
 
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
   const handleLogin = async () => {
     try {
       const result = await signInWithPopup(auth, provider);
-      console.log('User Info:', result.user);
+      const { user } = result;
+
+      // Save user additional data to Firestore
+      if (user) {
+        await setDoc(doc(db, 'users', user.uid), {
+          email: email || user.email,
+          name: name || user.displayName,
+          contact: contact || ''
+        });
+        console.log('User Info saved to Firestore:', user);
+      }
     } catch (error) {
       console.error('Error signing in:', error.message);
     }
@@ -54,28 +67,60 @@ function Login() {
     }
   };
 
-  useEffect(() => {
-    if (user) {
-      // Implement saveEvents if needed
-      // saveEvents();
-    }
-  }, [user]);
-
   return (
     <>
       <NavBar />
       <div className='body'>
-        <header>
-          <h1>Calendar App</h1>
+        <div className="container-form">
           {user ? (
             <div>
+                <h1>Calendar App</h1>
+
               <p>Welcome, {user.displayName}!</p>
-              <button onClick={handleLogout}>Sign Out</button>
+              <button className='btn' onClick={handleLogout}>Sair</button>
             </div>
           ) : (
-            <button onClick={handleLogin}>Sign In with Google</button>
+            <div className="form-input">
+            <h1>Login</h1>
+                <div className="coolinput">
+                    <label className="text">Nome</label>
+                    <input
+                        className="input"
+                        type="text"
+                        placeholder="Nome"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                    />
+                </div>
+                <div className="coolinput">
+                    <label className="text">Email</label>
+                    <input
+                        className="input"
+                        type="email"
+                        placeholder="Email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                    />
+                </div>
+                <div className="coolinput">
+                    <label className="text">Contacto</label>
+                    <input
+                        className="input"
+                        type="text"
+                        placeholder="Contacto"
+                        value={contact}
+                        onChange={(e) => setContact(e.target.value)}
+                    />
+                </div>
+
+                <br/>
+                <hr/>
+                <br/>
+
+                <button className='btn' onClick={handleLogin}>Login com o Google</button>
+            </div>
           )}
-        </header>
+        </div>
       </div>
     </>
   );
