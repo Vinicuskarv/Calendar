@@ -154,9 +154,8 @@ function App() {
   
       // Itere sobre todos os usuários
       for (const user of loggedInUsers) {
-          console.log(user);
 
-        const userEventsRef = collection(db, `users/${user.email}/events`);
+        const userEventsRef = collection(db, `users/${user.uid}/events`);
         const querySnapshot = await getDocs(userEventsRef);
   
         querySnapshot.forEach(doc => {
