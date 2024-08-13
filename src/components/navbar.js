@@ -68,6 +68,10 @@ const BurgerMenu = () => {
         <nav className={`navbar ${isChecked ? 'active' : ''}`}>
           <ul>
             <Link to='/calendar'>Calendário</Link>
+            <Link to='/calendar'>Perfil</Link>
+            <Link to='/calendar'>Configuração</Link>
+            <Link to='/calendar'>Admin</Link>
+
           </ul>
         </nav>
       </div>

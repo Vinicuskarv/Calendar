@@ -31,7 +31,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
+// const provider = new GoogleAuthProvider();
 
 const months = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho",
@@ -57,13 +57,44 @@ function App() {
   const [eventTimeFrom, setEventTimeFrom] = useState('');
   const [eventTimeTo, setEventTimeTo] = useState('');
   const [user, setUser] = useState(null);
+  const [selectedUser, setSelectedUser] = useState('todos');
+
+  const [loggedInUsers, setLoggedInUsers] = useState([]);
+
+  const getLoggedInUsers = async () => {
+    try {
+      const usersRef = collection(db, 'users');
+      const querySnapshot = await getDocs(usersRef);
+      const users = [];
+      querySnapshot.forEach((doc) => {
+        users.push(doc.data());
+      });
+
+      return users;
+    } catch (error) {
+      console.error('Error fetching logged-in users:', error.message);
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const users = await getLoggedInUsers();
+      setLoggedInUsers(users);
+    };
+
+    fetchUsers();
+  }, []);
+
+
 
   useEffect(() => {
     // Monitor authentication state
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        getEvents(currentUser.uid);
+        // getEvents(currentUser.uid);
+        getAllEvents()
       } else {
         setUser(null);
       }
@@ -72,24 +103,6 @@ function App() {
     // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
-
-  const handleLogin = async () => {
-    try {
-      const result = await signInWithPopup(auth, provider);
-      console.log('User Info:', result.user);
-    } catch (error) {
-      console.error('Error signing in:', error.message);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      console.log('User signed out.');
-    } catch (error) {
-      console.error('Error signing out:', error.message);
-    }
-  };
 
   const saveEvents = async () => {
     if (user) {
@@ -113,23 +126,52 @@ function App() {
     }
   };
 
-  const getEvents = async (userId) => {
-    try {
-      const userEventsRef = collection(db, `users/${userId}/events`);
-      const querySnapshot = await getDocs(userEventsRef);
-      const events = [];
+  // const getEvents = async (userId) => {
+  //   console.log(loggedInUsers);
+  //   try {
+  //     const userEventsRef = collection(db, `users/${userId}/events`);
+  //     const querySnapshot = await getDocs(userEventsRef);
+  //     const events = [];
   
-      for (const doc of querySnapshot.docs) {
-        const eventData = doc.data();
-        events.push({
-          ...eventData,
-          userName: eventData.userName || 'Unknown' // Adicione esta linha
+  //     for (const doc of querySnapshot.docs) {
+  //       const eventData = doc.data();
+  //       events.push({
+  //         ...eventData,
+  //         usertitle: user.displayName
+  //       });
+  //     }
+  
+  //     setEventsArr(events);
+  //   } catch (error) {
+  //     console.error('Error fetching events:', error.message);
+  //   }
+    
+  // };
+  const getAllEvents = async () => {
+    try {
+      // Inicialize um array para armazenar todos os eventos
+      const allEvents = [];
+  
+      // Itere sobre todos os usuários
+      for (const user of loggedInUsers) {
+          console.log(user);
+
+        const userEventsRef = collection(db, `users/${user.email}/events`);
+        const querySnapshot = await getDocs(userEventsRef);
+  
+        querySnapshot.forEach(doc => {
+          const eventData = doc.data();
+          allEvents.push({
+            ...eventData,
+            userName: user.name,
+            userEmail: user.email
+          });
         });
       }
-  
-      setEventsArr(events);
+      // Atualize o estado com todos os eventos
+      setEventsArr(allEvents);
     } catch (error) {
-      console.error('Error fetching events:', error.message);
+      console.error('Error fetching all events:', error.message);
     }
   };
 
@@ -225,29 +267,29 @@ function App() {
   const handleAddEventClick = () => {
     setShowEventForm(prev => !prev);
   };
-  const getUserDetails = async (userId) => {
-    try {
-      const userDoc = await doc(db, `users/${userId}`).get();
-      return userDoc.exists() ? userDoc.data() : { name: 'Unknown' };
-    } catch (error) {
-      console.error('Error fetching user details:', error.message);
-      return { name: 'Unknown' };
-    }
-  };
+
+  // const getUserDetails = async (userId) => {
+  //   try {
+  //     const userDoc = await doc(db, `users/${userId}`).get();
+  //     return userDoc.exists() ? userDoc.data() : { name: 'Unknown' };
+  //   } catch (error) {
+  //     console.error('Error fetching user details:', error.message);
+  //     return { name: 'Unknown' };
+  //   }
+  // };
 
   const handleSaveEvent = () => {
     if (!eventTitle || !eventTimeFrom || !eventTimeTo) {
       alert('Por favor preencha todos os campos');
       return;
     }
-  
     const newEvent = {
       title: eventTitle,
       time: `${eventTimeFrom} - ${eventTimeTo}`,
       user: user.uid,
       userName: user.displayName
     };
-  
+    
     setEventsArr(prevEvents => {
       const eventIndex = prevEvents.findIndex(event => event.day === activeDay.value && event.month === activeDay.month && event.year === activeDay.year);
   
@@ -260,6 +302,8 @@ function App() {
         return [...prevEvents, { day: activeDay.value, month: activeDay.month, year: activeDay.year, events: [newEvent] }];
       }
     });
+  
+    saveEvents();
   
     setEventTitle('');
     setEventTimeFrom('');
@@ -285,19 +329,36 @@ function App() {
   };
 
   const getEventsForActiveDay = () => {
-    return eventsArr.find(event => 
+    // Filtra os eventos para o dia ativo
+    const activeDayEvents = eventsArr.find(event => 
       event.day === activeDay.value && 
       event.month === activeDay.month && 
       event.year === activeDay.year
+      
     );
+    // console.log(eventsArr)
+    // Se o dia ativo tem eventos, filtra por usuário selecionado
+    if (activeDayEvents) {
+      return activeDayEvents.events.filter(event => 
+        selectedUser === 'todos' || event.userName === selectedUser
+      );
+    }
+    
+    return [];
   };
+  
+
+  useEffect(() => {
+      const day = new Date(year, month + 1, 0);
+      setActiveWeekdayName(getWeekdayName(day.getDate(), day.getMonth(), day.getFullYear()));
+  }, []);
 
   return (
     <>
     <NavBar/>
     <div className='body'>
 
-    <div class="container-calendar">
+    <div className="container-calendar">
       {/* <header>
         <h1>Calendar App</h1>
         {user ? (
@@ -340,12 +401,18 @@ function App() {
         <button className="add-event" onClick={handleAddEventClick}>
           <i className="fas fa-plus"></i>
         </button>
+        <select className="user-select-event" onChange={(e) => setSelectedUser(e.target.value)}>
+          <option value="todos">todos</option>
+          {loggedInUsers.map((user, index) => (
+            <option key={index} value={user.uid}>{user.name || 'Anonymous'}</option>
+          ))}
+        </select>
         <div className="today-date">
           <div className="event-day">{activeWeekdayName}</div>
           <div className="event-date">{activeDay ? `${activeDay.value} ${months[activeDay.month - 1]} ${year}` : 'Selecione um dia'}</div>
         </div>
         <div className="events">
-          {getEventsForActiveDay() && getEventsForActiveDay().events.map((event, index) => (
+          {getEventsForActiveDay().map((event, index) => (
             <div key={index} className="LineEvents">
               <div className="values">
                 <div className='values-name'>{event.userName || 'Unknown'}</div>
@@ -353,7 +420,6 @@ function App() {
                   <div>{event.title}</div>
                   <div>{event.time}</div>
                 </div>
-
               </div>
               <div className="trash" onClick={() => handleDeleteEvent(event.title)}>
                 <i className="fas fa-trash"></i>

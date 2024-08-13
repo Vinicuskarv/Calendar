@@ -23,6 +23,8 @@ const db = getFirestore(app);
 function Login() {
   const [user, setUser] = useState(null);
   const [email, setEmail] = useState('');
+  const [uid, setUid] = useState('');
+
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
 
@@ -47,23 +49,24 @@ function Login() {
       // Save user additional data to Firestore
       if (user) {
         await setDoc(doc(db, 'users', user.uid), {
+          uid: uid || user.uid,
           email: email || user.email,
           name: name || user.displayName,
           contact: contact || ''
         });
-        console.log('User Info saved to Firestore:', user);
+        // console.log('User Info saved to Firestore:', user);
       }
     } catch (error) {
-      console.error('Error signing in:', error.message);
+      // console.error('Error signing in:', error.message);
     }
   };
 
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      console.log('User signed out.');
+      // console.log('User signed out.');
     } catch (error) {
-      console.error('Error signing out:', error.message);
+      // console.error('Error signing out:', error.message);
     }
   };
 
