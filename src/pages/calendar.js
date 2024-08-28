@@ -52,6 +52,8 @@ function App() {
   });
   const [activeWeekdayName, setActiveWeekdayName] = useState('');
   const [eventsArr, setEventsArr] = useState([]);
+  // const [allEvents, setAllEvents] = useState([]);
+
   const [showEventForm, setShowEventForm] = useState(false);
   const [eventTitle, setEventTitle] = useState('');
   const [eventTimeFrom, setEventTimeFrom] = useState('');
@@ -67,9 +69,11 @@ function App() {
       const querySnapshot = await getDocs(usersRef);
       const users = [];
       querySnapshot.forEach((doc) => {
-        users.push(doc.data());
+        const userData = doc.data();
+        // Inclua o ID do documento como UID
+        users.push({ ...userData, uid: doc.id });
       });
-
+  
       return users;
     } catch (error) {
       console.error('Error fetching logged-in users:', error.message);
@@ -106,7 +110,11 @@ function App() {
 
   const saveEvents = async () => {
     if (user) {
+      
       try {
+        // Filtrar eventos para o usuário logado
+        const userEvents = eventsArr.filter(event => event.uid === user.uid);
+
         const userEventsRef = collection(db, `users/${user.uid}/events`);
         
         // Clear the existing events for the user
@@ -114,9 +122,9 @@ function App() {
         for (const doc of existingEventsSnapshot.docs) {
           await deleteDoc(doc.ref);
         }
-
+  
         // Save the updated events
-        for (const event of eventsArr) {
+        for (const event of userEvents) {
           await setDoc(doc(userEventsRef, `${event.day}-${event.month}-${event.year}`), event);
         }
         console.log('Events saved successfully.');
@@ -153,6 +161,8 @@ function App() {
       const allEvents = [];
   
       // Itere sobre todos os usuários
+      // console.log(loggedInUsers , "loggedInUsers");
+
       for (const user of loggedInUsers) {
 
         const userEventsRef = collection(db, `users/${user.uid}/events`);
@@ -163,11 +173,14 @@ function App() {
           allEvents.push({
             ...eventData,
             userName: user.name,
-            userEmail: user.email
+            userEmail: user.email,
+            userUid: user.uid
           });
         });
+
+
       }
-      // Atualize o estado com todos os eventos
+      // console.log(allEvents , "allEvents");
       setEventsArr(allEvents);
     } catch (error) {
       console.error('Error fetching all events:', error.message);
@@ -329,6 +342,7 @@ function App() {
 
   const getEventsForActiveDay = () => {
     // Filtra os eventos para o dia ativo
+    
     const activeDayEvents = eventsArr.find(event => 
       event.day === activeDay.value && 
       event.month === activeDay.month && 

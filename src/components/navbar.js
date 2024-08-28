@@ -70,7 +70,7 @@ const BurgerMenu = () => {
             <Link to='/calendar'>Calendário</Link>
             <Link to='/calendar'>Perfil</Link>
             <Link to='/calendar'>Configuração</Link>
-            <Link to='/calendar'>Admin</Link>
+            <Link to='/admin'>Admin</Link>
 
           </ul>
         </nav>
